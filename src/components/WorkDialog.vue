@@ -22,10 +22,8 @@
             </div>
 
             <div class="p-field">
-                <label for="date">Awarded Month (MM/YYYY)</label>
-                <Calendar id="date" v-model="work.date" view="month" dateFormat="mm/yy"
-                          :yearNavigator="true" :yearRange="`1950:${new Date().getFullYear()}`" placeholder="MM/YYYY"
-                          :class="{'p-invalid': submitted && $v.work.date.$invalid}"/>
+                <label for="date">Date</label>
+                <Calendar id="date" v-model="work.date"/>
                 <small class="p-invalid" style="margin-right: 1em" v-if="submitted && !$v.work.date.required">
                     Date is required.
                 </small>
@@ -105,7 +103,7 @@ export default class WorkDialog extends Vue {
     // staffService = new StaffService();
     staffs = [];
     // workService = new WorkService();
-    @Prop(Boolean) workDialog;
+    workDialog = false;
     @Prop(Boolean) deleteWorkDialog;
     @Prop(Boolean) deleteWorksDialog;
     toggleWorksDialog = false;
@@ -133,7 +131,10 @@ export default class WorkDialog extends Vue {
 
     @Watch('createWork')
     async onCreateWorkChanged() {
-        if (this.createWork) this.staffs = await this.staffService.getStaffs();
+        if (this.createWork) {
+          const users = await store.dispatch('jv/get', 'users');
+          this.staffs = Object.values(users)
+        }
     }
 
     @Watch('work')
