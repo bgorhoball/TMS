@@ -16,6 +16,7 @@ export default new Vuex.Store({
     state: {
         token: '',
         userId: null,
+        roles: []
     },
     mutations: {
         addToken(store, payload) {
@@ -24,6 +25,9 @@ export default new Vuex.Store({
         },
         addUserId(store, payload) {
             store.userId = payload
+        },
+        addRoles(store, payload) {
+            store.roles = payload
         },
     },
     actions: {},

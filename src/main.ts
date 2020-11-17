@@ -7,6 +7,7 @@ import Vuelidate from 'vuelidate'
 import moment from './plugin/moment';
 import formatDate from './plugin/formatDate'
 import papaparse from './plugin/papaparse'
+import exportCsv from './plugin/exportCsv'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 Vue.config.productionTip = false
@@ -16,6 +17,7 @@ Vue.use(Vuelidate)
 Vue.use(moment)
 Vue.use(formatDate)
 Vue.use(papaparse)
+Vue.use(exportCsv)
 
 new Vue({
   router,

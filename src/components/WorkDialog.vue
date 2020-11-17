@@ -5,11 +5,11 @@
                 :modal="true" :maximizable="true" class="p-fluid">
 
             <div class="p-field" v-if="createWork">
-                <label for="staff">Staff</label>
-                <Dropdown id="staff" v-model="work.staff"
-                          :options="staffs" optionLabel="name" :filter="true"
-                          :class="{'p-invalid': submitted && $v.work.staff.$invalid}"/>
-                <small class="p-invalid" v-if="submitted && $v.work.staff.$invalid">Staff is
+                <label for="user">User</label>
+                <Dropdown id="user" v-model="work.user"
+                          :options="users" optionLabel="name" :filter="true"
+                          :class="{'p-invalid': submitted && $v.work.user.$invalid}"/>
+                <small class="p-invalid" v-if="submitted && $v.work.user.$invalid">User is
                     required.</small>
             </div>
 
@@ -23,13 +23,29 @@
 
             <div class="p-field">
                 <label for="date">Date</label>
-                <Calendar id="date" v-model="work.date"/>
+                <Calendar id="date" v-model="work.date" dateFormat="yy-mm-dd"/>
                 <small class="p-invalid" style="margin-right: 1em" v-if="submitted && !$v.work.date.required">
                     Date is required.
                 </small>
                 <small class="p-invalid" v-if="submitted && !$v.work.date.dateFormat">
                     Date is in wrong format.
                 </small>
+            </div>
+
+            <div class="p-field">
+                <label for="est-hours">Est Hours</label>
+                <InputText id="est-hours" v-model.trim="work['est-hours']" required="true" autofocus
+                           :class="{'p-invalid': submitted && $v.work['est-hours'].$invalid}"/>
+                <small class="p-invalid" v-if="submitted && $v.work['est-hours'].$invalid">Est Hours is
+                    required.</small>
+            </div>
+
+            <div class="p-field">
+                <label for="hours">Hours</label>
+                <InputText id="hours" v-model.trim="work.hours" required="true" autofocus
+                           :class="{'p-invalid': submitted && $v.work.hours.$invalid}"/>
+                <small class="p-invalid" v-if="submitted && $v.work.hours.$invalid">Hours is
+                    required.</small>
             </div>
 
             <template #footer>
@@ -43,7 +59,7 @@
         <Dialog :visible.sync="deleteWorkDialog" :style="{width: '450px'}" header="Confirm" :modal="true">
             <div class="confirmation-content">
                 <i class="pi pi-exclamation-triangle p-mr-3" style="font-size: 2rem"/>
-                <span v-if="work">Are you sure you want to delete <b>{{ work.title }}</b>?</span>
+                <span v-if="work">Are you sure you want to delete <b>{{ work.details }}</b>?</span>
             </div>
             <template #footer>
                 <Button label="No" icon="pi pi-times" class="p-button-text"
@@ -56,7 +72,7 @@
         <Dialog :visible.sync="deleteWorksDialog" :style="{width: '450px'}" header="Confirm" :modal="true">
             <div class="confirmation-content">
                 <i class="pi pi-exclamation-triangle p-mr-3" style="font-size: 2rem"/>
-                <span v-if="work">Are you sure you want to delete the selected Work Qualifications?</span>
+                <span v-if="work">Are you sure you want to delete the selected Work Records?</span>
             </div>
             <template #footer>
                 <Button label="No" icon="pi pi-times" class="p-button-text"
@@ -72,7 +88,7 @@
 import {Component, Prop, Vue, Watch} from "vue-property-decorator";
 
 Component.registerHooks(['validations']);
-import {required} from 'vuelidate/lib/validators'
+import {required, integer} from 'vuelidate/lib/validators'
 import Toast from 'primevue/toast';
 import Dialog from "primevue/dialog";
 import Dropdown from 'primevue/dropdown';
@@ -80,8 +96,6 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import InputSwitch from 'primevue/inputswitch';
 import Calendar from 'primevue/calendar';
-// import WorkService from "@/service/WorkService";
-// import StaffService from "@/service/StaffService";
 import store from "../store";
 
 /**
@@ -100,31 +114,31 @@ import store from "../store";
 })
 export default class WorkDialog extends Vue {
     createWork = false;
-    // staffService = new StaffService();
-    staffs = [];
-    // workService = new WorkService();
+    users = [];
     workDialog = false;
-    @Prop(Boolean) deleteWorkDialog;
-    @Prop(Boolean) deleteWorksDialog;
-    toggleWorksDialog = false;
-    verifyWorks = false;
+    deleteWorkDialog = false;
+    deleteWorksDialog = false;
     work = {};
     submitted = false;
     selectedWorks = [];
+    showMessage = false;
+    message = {
+        status: '',
+        message: ''
+    }
 
     validations() {
         const dateFormat = value => {
-            if (typeof value === 'string' && !value.match(/^\d{1,2}\/\d{4}$/g)) return false
-            return this.$moment(value, "MM/YYYY").isSameOrBefore(this.$moment())
+            if (typeof value === 'string' && !value.match(/^\d{4}-\d{1,2}-\d{1,2}$/g)) return false
+            return this.$moment(value).isValid();
         }
         return {
             work: {
-                // staff: {required},
-                // level: {required},
-                // discipline: {required},
-                // title: {required},
-                // institution: {required},
-                // date: {required, dateFormat}
+                user: {required},
+                details: {required},
+                date: {required, dateFormat},
+                'est-hours': {required, integer},
+                hours: {integer},
             }
         }
     }
@@ -132,8 +146,8 @@ export default class WorkDialog extends Vue {
     @Watch('createWork')
     async onCreateWorkChanged() {
         if (this.createWork) {
-          const users = await store.dispatch('jv/get', 'users');
-          this.staffs = Object.values(users)
+            const users = await store.dispatch('jv/get', 'users');
+            this.users = Object.values(users)
         }
     }
 
@@ -155,67 +169,44 @@ export default class WorkDialog extends Vue {
         }
 
         const workObj = {
-            'verified': 0,
             _jv: {
                 type: 'works',
                 relationships: {
-                    staff: {data: {id: this.work.staff._jv.id, type: 'staffs'}}
+                    user: {data: {id: this.work.user._jv.id, type: 'users'}}
                 }
             }
         };
 
-        ['level', 'discipline', 'title', 'description', 'institution'].forEach(el => {
+        ['details', 'hours', 'est-hours',].forEach(el => {
             workObj[el] = this.work[el]
         });
 
-        workObj['date'] = this.$moment(this.work.date, "MM/YYYY").toISOString()
+        workObj['date'] = this.$moment(this.work.date).toISOString()
 
         try {
             if (this.work._jv) {
                 // PATCH
                 workObj._jv.id = this.work._jv.id
-                await this.workService.updateWork(workObj)
+                await store.dispatch('jv/patch', workObj)
             } else {
                 // POST
-                await this.workService.createWork(workObj);
+                await store.dispatch('jv/post', workObj)
             }
             this.$emit('updated')
-            this.toastSuccess.detail = 'Work Qualifications Updated'
-            this.$toast.add(this.toastSuccess);
         } catch (e) {
-            this.toastError.detail = e.message
-            this.$toast.add(this.toastError);
-            this.workService.logError(e).forEach(err => {
-                this.$toast.add({
-                    severity: 'error',
-                    summary: 'Details',
-                    detail: err
-                });
-            })
+            console.log(e)
         }
-
         this.workDialog = false;
         this.work = {};
     }
 
     async deleteWork() {
         try {
-            await this.workService.deleteWork(this.work._jv.id)
+            await store.dispatch('jv/delete', `works/${this.work._jv.id}`)
             this.$emit('updated')
-            this.toastSuccess.detail = 'Work Qualifications Deleted'
-            this.$toast.add(this.toastSuccess);
         } catch (e) {
-            this.toastError.detail = e.message
-            this.$toast.add(this.toastError);
-            this.workService.logError(e).forEach(err => {
-                this.$toast.add({
-                    severity: 'error',
-                    summary: 'Details',
-                    detail: err
-                });
-            })
+            console.log(e)
         }
-
         this.deleteWorkDialog = false;
         this.work = {};
     }
@@ -223,82 +214,13 @@ export default class WorkDialog extends Vue {
     async deleteSelectedWorks() {
         try {
             for (const deleteWork of this.selectedWorks) {
-                await this.workService.deleteWork(deleteWork._jv.id)
+                await store.dispatch('jv/delete', `works/${deleteWork._jv.id}`)
             }
             this.$emit('updated')
-            this.toastSuccess.detail = 'Work Qualifications Deleted'
-            this.$toast.add(this.toastSuccess);
         } catch (e) {
-            this.toastError.detail = e.message
-            this.$toast.add(this.toastError);
-            this.workService.logError(e).forEach(err => {
-                this.$toast.add({
-                    severity: 'error',
-                    summary: 'Details',
-                    detail: err
-                });
-            })
+            console.log(e)
         }
         this.deleteWorksDialog = false;
-        this.selectedWorks = [];
-    }
-
-    async toggleSelectedWorks() {
-        try {
-            if (this.verifyWorks) {
-                // verify
-                for (const verifyWork of this.selectedWorks) {
-                    const workObj = {
-                        'verified': 1,
-                        'verified-by': store.state.staffId,
-                        'verified-at': this.$moment().toISOString(),
-                        _jv: {
-                            id: verifyWork._jv.id,
-                            type: 'works',
-                            relationships: {
-                                staff: {data: {id: verifyWork.staff._jv.id, type: 'staffs'}}
-                            }
-                        }
-                    };
-                    await this.workService.updateWork(workObj)
-                }
-            }
-
-            if (!this.verifyWorks) {
-                // unverify
-                for (const verifyWork of this.selectedWorks) {
-                    const workObj = {
-                        'verified': 0,
-                        'verified-by': null,
-                        'verified-at': null,
-                        _jv: {
-                            id: verifyWork._jv.id,
-                            type: 'works',
-                            relationships: {
-                                staff: {data: {id: verifyWork.staff._jv.id, type: 'staffs'}}
-                            }
-                        }
-                    };
-                    await this.workService.updateWork(workObj)
-                }
-            }
-
-            this.$emit('updated')
-            this.toastSuccess.detail = 'Work Qualifications Updated'
-            this.$toast.add(this.toastSuccess);
-        } catch (e) {
-            this.toastError.detail = e.message
-            this.$toast.add(this.toastError);
-            this.workService.logError(e).forEach(err => {
-                this.$toast.add({
-                    severity: 'error',
-                    summary: 'Details',
-                    detail: err,
-                });
-            })
-        }
-
-        this.toggleWorksDialog = false;
         this.selectedWorks = [];
     }
 }
