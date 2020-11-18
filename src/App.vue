@@ -30,7 +30,7 @@ export default class App extends Vue {
     async logout() {
         try {
             if (this.$store.state.token) {
-                await axios.post('https://tms-api.dita1.fhk-app.com/logout', '', {
+                await axios.post(`${process.env.VUE_APP_WEBBASEURL}/logout`, '', {
                     headers: {
                         'Accept': 'application/vnd.api+json',
                         'Content-Type': 'application/vnd.api+json',

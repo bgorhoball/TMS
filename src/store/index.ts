@@ -6,7 +6,7 @@ import {jsonapiModule} from 'jsonapi-vuex/src/jsonapi-vuex.js'
 Vue.use(Vuex)
 
 const api = axios.create({
-    baseURL: 'https://tms-api.dita1.fhk-app.com/api/v1/',
+    baseURL: process.env.VUE_APP_APIBASEURL,
     headers: {
         'Content-Type': 'application/vnd.api+json',
     },

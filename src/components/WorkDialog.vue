@@ -2,7 +2,7 @@
     <div>
         <!--Edit Work Dialog-->
         <Dialog :visible.sync="workDialog" :style="{width: '450px'}" header="Work Qualifications Details"
-                :modal="true" :maximizable="true" class="p-fluid">
+                :modal="true" :maximizable="true" class="p-fluid" @hide="submitted = false">
 
             <div class="p-field" v-if="createWork">
                 <label for="user">User</label>
@@ -158,7 +158,7 @@ export default class WorkDialog extends Vue {
 
     hideDialog() {
         this.workDialog = false;
-        this.submitted = false;
+        this.work = {};
     }
 
     async saveWork() {

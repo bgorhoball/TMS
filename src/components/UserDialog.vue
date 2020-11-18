@@ -2,7 +2,7 @@
     <div>
         <!--Edit User Dialog-->
         <Dialog :visible.sync="userDialog" :style="{width: '450px'}" header="User Qualifications Details"
-                :modal="true" :maximizable="true" class="p-fluid">
+                :modal="true" :maximizable="true" class="p-fluid" @hide="submitted = false">
 
             <div class="p-field">
                 <label for="name">Name</label>
@@ -145,7 +145,6 @@ export default class UserDialog extends Vue {
 
     hideDialog() {
         this.userDialog = false;
-        this.submitted = false;
         this.user = {}
     }
 
@@ -179,7 +178,7 @@ export default class UserDialog extends Vue {
                 await store.dispatch('jv/patch', userObj)
             } else {
                 // POST
-                await axios.post('https://tms-api.dita1.fhk-app.com/register', this.user);
+                await axios.post(`${process.env.VUE_APP_WEBBASEURL}/register`, this.user);
             }
             this.$emit('updated')
         } catch (e) {

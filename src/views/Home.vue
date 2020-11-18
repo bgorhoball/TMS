@@ -140,7 +140,7 @@ export default class Home extends Vue {
             return; // invalid input
         }
         try {
-            const response = await axios.post('https://tms-api.dita1.fhk-app.com/login', this.user);
+            const response = await axios.post(`${process.env.VUE_APP_WEBBASEURL}/login`, this.user);
             this.$store.commit('addToken', response.data.token); // add token to store
             this.$store.commit('addUserId', response.data.user.toString()); // add user id to store
             this.$store.commit('addRoles', response.data.roles); // add roles to store
@@ -182,7 +182,7 @@ export default class Home extends Vue {
         }
 
         try {
-            const response = await axios.post('https://tms-api.dita1.fhk-app.com/register', this.user);
+            const response = await axios.post(`${process.env.VUE_APP_WEBBASEURL}/register`, this.user);
             this.$store.commit('addToken', response.data.token); // add token to store
             this.$store.commit('addUserId', response.data.user); // add user id to store
             this.$store.commit('addRoles', ['regular-user']); // add roles to store
